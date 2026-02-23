@@ -9,7 +9,6 @@ import { toast } from "sonner";
 const ACCESS_CODE = "Xa876lp-";
 
 export default function AdminDashboard() {
-  const [user, setUser] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(null);
@@ -31,23 +30,25 @@ export default function AdminDashboard() {
         if (stored === ACCESS_CODE) {
           setAccessGranted(true);
           try {
-            const { data: allOrders } = await supabase.from('Order').select('*');
-            setOrders(allOrders || []);
-
+            const [allOrders, methods] = await Promise.all([
+              supabase.from('Order').select('*'),
+              supabase.from('PaymentMethodConfig').select('*')
+            ]);
+            
+            setOrders(allOrders.data || []);
+            
             const allMethods = ['paypal', 'applepay', 'venmo', 'cashapp', 'wise', 'zelle', 'revolut', 'chime', 'skrill', 'bitcoin', 'litecoin', 'tether', 'usdc', 'solana', 'ethereum', 'binance'];
-
-            const { data: methods } = await supabase.from('PaymentMethodConfig').select('*');
-            const existingMethods = methods || [];
+            const existingMethods = methods.data || [];
             const missingMethods = allMethods.filter(m => !existingMethods.find(em => em.method === m));
-
+            
             if (missingMethods.length > 0) {
               await supabase
                 .from('PaymentMethodConfig')
                 .insert(missingMethods.map(method => ({ method, enabled: true, hidden_from_customers: false })));
             }
-
-            const { data: updatedMethods } = await supabase.from('PaymentMethodConfig').select('*');
-            setPaymentMethods(updatedMethods || []);
+            
+            const updatedMethods = await supabase.from('PaymentMethodConfig').select('*');
+            setPaymentMethods(updatedMethods.data || []);
           } catch (e) {
             console.error('Failed to load data:', e);
             toast.error('Failed to load dashboard data');
@@ -62,13 +63,34 @@ export default function AdminDashboard() {
     checkAuth();
   }, []);
 
-  const handleCodeSubmit = (e) => {
+  const handleCodeSubmit = async (e) => {
     e.preventDefault();
     if (codeInput === ACCESS_CODE) {
       localStorage.setItem("adminAccessCode", ACCESS_CODE);
       setAccessGranted(true);
       setCodeInput("");
       setCodeError("");
+      setLoading(true);
+      try {
+        const [allOrders, methods] = await Promise.all([
+          supabase.from('Order').select('*'),
+          supabase.from('PaymentMethodConfig').select('*')
+        ]);
+        setOrders(allOrders.data || []);
+        const allMethods = ['paypal', 'applepay', 'venmo', 'cashapp', 'wise', 'zelle', 'revolut', 'chime', 'skrill', 'bitcoin', 'litecoin', 'tether', 'usdc', 'solana', 'ethereum', 'binance'];
+        const existingMethods = methods.data || [];
+        const missingMethods = allMethods.filter(m => !existingMethods.find(em => em.method === m));
+        if (missingMethods.length > 0) {
+          await supabase
+            .from('PaymentMethodConfig')
+            .insert(missingMethods.map(method => ({ method, enabled: true, hidden_from_customers: false })));
+        }
+        const updatedMethods = await supabase.from('PaymentMethodConfig').select('*');
+        setPaymentMethods(updatedMethods.data || []);
+      } catch (err) {
+        toast.error('Failed to load dashboard data');
+      }
+      setLoading(false);
     } else {
       setCodeError("Incorrect access code");
     }
@@ -276,6 +298,10 @@ export default function AdminDashboard() {
     </motion.div>
   );
 
+  const pendingOrders = orders.filter(o => o.status === "pending");
+  const inProgressOrders = orders.filter(o => o.status === "in_progress");
+  const completedOrders = orders.filter(o => o.status === "completed");
+
   return (
     <div className="min-h-screen bg-[#0a0a1a] px-6 py-12">
       <div className="max-w-6xl mx-auto">
@@ -284,6 +310,7 @@ export default function AdminDashboard() {
           <p className="text-slate-400">Manage all orders and track completions</p>
         </div>
 
+        {/* Payment Methods Control */}
         {!loadingMethods && paymentMethods.length > 0 && (
           <div className="mb-10 p-6 rounded-2xl border border-white/10 bg-white/[0.03]">
             <div className="flex items-center justify-between mb-4">
@@ -339,6 +366,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* Toggle Completed Orders */}
         <div className="mb-8 flex justify-between items-center">
           <div></div>
           <Button
@@ -351,6 +379,7 @@ export default function AdminDashboard() {
           </Button>
         </div>
 
+        {/* Pending Orders */}
         <div className="mb-16">
           <div className="flex items-center gap-3 mb-6">
             <Clock className="w-6 h-6 text-blue-400" />
@@ -370,6 +399,7 @@ export default function AdminDashboard() {
           )}
         </div>
 
+        {/* In Progress Orders */}
         <div className="mb-16">
           <div className="flex items-center gap-3 mb-6">
             <Zap className="w-6 h-6 text-yellow-400" />
@@ -389,6 +419,7 @@ export default function AdminDashboard() {
           )}
         </div>
 
+        {/* Completed Orders */}
         <AnimatePresence>
           {showCompleted && (
             <motion.div
