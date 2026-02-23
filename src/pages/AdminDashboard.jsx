@@ -186,6 +186,7 @@ export default function AdminDashboard() {
     );
   }
 
+  // Only one set of these filters (no duplicates)
   const pendingOrders = orders.filter(o => o.status === "pending");
   const inProgressOrders = orders.filter(o => o.status === "in_progress");
   const completedOrders = orders.filter(o => o.status === "completed");
