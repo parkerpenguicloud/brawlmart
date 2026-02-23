@@ -81,6 +81,7 @@ export default function Layout({ children, currentPageName }) {
             Join our Discord
           </a>
           <p className="text-xs text-slate-600">© 2026 BrawlMart. All rights reserved.</p>
+          <Link to={createPageUrl("AdminDashboard")} className="text-xs text-slate-800 hover:text-slate-600 transition-colors">Dashboard</Link>
         </div>
       </footer>
     </div>
