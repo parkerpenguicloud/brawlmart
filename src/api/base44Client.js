@@ -1,14 +1,5 @@
-import { createClient } from '@base44/sdk';
-import { appParams } from '@/lib/app-params';
+// src/api/base44Client.js
+// This file is no longer needed after migration to Supabase
+// Kept as empty export to avoid breaking any lingering imports
 
-const { appId, token, functionsVersion, appBaseUrl } = appParams;
-
-//Create a client with authentication required
-export const base44 = createClient({
-  appId,
-  token,
-  functionsVersion,
-  serverUrl: '',
-  requiresAuth: false,
-  appBaseUrl
-});
+export const base44 = {};
