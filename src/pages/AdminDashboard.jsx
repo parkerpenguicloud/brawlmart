@@ -186,7 +186,7 @@ export default function AdminDashboard() {
     );
   }
 
-  // Only one set of these filters (no duplicates)
+  // Only one set of these filters
   const pendingOrders = orders.filter(o => o.status === "pending");
   const inProgressOrders = orders.filter(o => o.status === "in_progress");
   const completedOrders = orders.filter(o => o.status === "completed");
@@ -298,10 +298,6 @@ export default function AdminDashboard() {
       )}
     </motion.div>
   );
-
-  const pendingOrders = orders.filter(o => o.status === "pending");
-  const inProgressOrders = orders.filter(o => o.status === "in_progress");
-  const completedOrders = orders.filter(o => o.status === "completed");
 
   return (
     <div className="min-h-screen bg-[#0a0a1a] px-6 py-12">
